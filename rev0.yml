@@ -1,0 +1,941 @@
+units:
+  h: cy
+  w: cx
+  sp: 0
+  padding: .5
+  padded: 2
+
+
+_key: 
+  size: [14,14]
+  footprints:
+    switch:
+      type: choc
+      nets: 
+        to: =column_net
+        from: =colrow
+      params:
+        reverse: false
+        # keycaps: true
+      # anchor.rotate: 180
+    diode:
+      type: diode
+      anchor:
+        shift: [0, -4.5]
+      nets:
+        from: =colrow
+        to: =row_net
+      params:
+        tht: false
+        via: true
+        side: front
+        padSize: 1.2
+
+_rotatedKey:
+  footprints:
+    switch:
+      anchor:
+        rotate: 90
+        shift: [0, .25h + .80]
+      params.width: 1.5
+    diode:
+      anchor:
+        rotate: 90
+        shift: [4.5, .25w + .55]
+
+__key:
+  $params: [p0, p1, p2, p3, p4, p5]
+  $args: ['',0,0,0,0,0]
+  key:
+    column_net: p0
+  spread: p1
+  stagger: p2
+  rotate: p3
+  origin: [p4, p5]
+
+__thumbKey:
+  $params: [p0, p1]
+  row_overrides: 
+    thumbs.column_net: p0
+    thumbs.row_net: p1
+
+points:
+  mirror: 
+    ref: matrix_inner_bottom
+    distance: 3.5w - .83
+  zones:
+    matrix:
+      key:
+        $extends: _key
+        tags.key: true
+      # rotate: -8
+      columns:
+        outer:
+          $extends: __key
+          $args: [c5, w]
+        pinky:
+          $extends: __key
+          $args: [c4, w]
+        ring:
+          $extends: __key
+          $args: [c3, w, 6, 0, -.5w, -1.5h]
+        middle:
+          $extends: __key
+          $args: [c2, w, 3, 0, -.5w, -1.5h]
+        index:
+          $extends: __key
+          $args: [c1, w, -2]
+        inner:
+          $extends: __key
+          $args: [c0, w, -1.75]          
+      rows:
+        bottom:
+          padding: h
+          row_net: r0
+        home:
+          padding: h
+          row_net: r1
+        top:
+          padding: h
+          row_net: r2
+        numrow:
+          padding: h
+          row_net: r3
+          
+    thumb:
+      key:
+        $extends: _key
+        tags.key: true
+      anchor:
+        ref: matrix_index_bottom
+        shift: [-w - 3, -h - 2]
+      columns:
+        reachy:
+          $extends: __thumbKey
+          $args: [c6, r0]
+          key:
+            name: thumb_super_tucky
+     
+        outer:
+          $extends: __thumbKey
+          $args: [c6, r1]
+          key.name: thumb_tucky
+          spread: w
+        middle:
+          $extends: __thumbKey
+          $args: [c6, r2]
+          key.name: thumb_home
+          spread: w + .1
+          rotate: -10
+          origin: [-.5w , -.5h - padding]
+        inner:
+          $extends: __thumbKey
+          $args: [c6, r3]
+          key:
+            name: thumb_reachy
+            $extends: _rotatedKey
+          spread: w - .4
+          origin: [-.5w, -.5h - padding]
+          rotate: -10
+      rows:
+        thumbs:
+          row_net: row_thumb
+    
+points.zones.mcu:
+  key:
+    # asym: left
+    name: xiao
+    mirror.footprints.xiao.anchor.ref: mirror_matrix_inner_top
+    footprints:
+      xiao:
+        type: xiao
+        anchor:
+          ref: 
+            # - matrix_inner_home
+            - matrix_inner_top
+          shift: [w + 2, -3]
+          # rotate: -90
+        params:
+          orientation: up
+        nets:
+          D10: MOSI
+          D9: MISO
+          D8: SCK
+          D0: r3
+          D1: r2
+          D2: r1
+          D3: r0
+          D4: x
+          D5: x # nice!view / spi screen
+          D6: x
+          D7: x
+          BAT: BAT
+
+points.zones.shiftReg:
+  key:
+    # asym: left
+    mirror.footprints.shiftreg.anchor.ref: mirror_matrix_inner_home
+    footprints:
+      shiftreg:
+        type: 74hc595
+        anchor:
+          ref:
+            - matrix_inner_home
+          shift: [w + 2, -4]
+        nets:
+          VCC: '3V3'
+          SCLR: '3V3'
+          MISO: SR_CS
+          A: x
+          B: c0
+          C: c1
+          D: c2
+          E: c3
+          F: c4
+          G: c5
+          H: c6
+
+points.zones.power:
+  key:
+    mirror.footprints.slider.anchor.ref: mirror_thumb_reachy
+    footprints:
+      slider:
+        type: slider
+        anchor:
+          ref: thumb_reachy
+          shift: [0,-.5h + 2.25]
+          rotate: 180
+        params.side: F
+        nets.to: GND
+        nets.from: BAT-
+
+points.zones.trrs:
+  key:
+    # asym: left
+    name: trrs
+    mirror.footprints.trrs.anchor:
+      ref: mirror_matrix_inner_bottom
+      # shift: [, 4.6]
+      shift: [,4.6]
+    footprints:
+      trrs:
+        type: trrs
+        nets:
+          A: GND
+          B: GND
+          C: D2
+          D: VCC
+        anchor:
+          ref: matrix_inner_bottom
+          shift: [28.64, 0]
+          rotate: -90
+        params:
+          reverse: false
+          symmetric: false    
+
+points.zones.mousebites:
+  key:
+    asym: left
+    footprints:
+      top: 
+        type: mousebites
+        anchor: 
+          rotate: 90
+          ref: [matrix_inner_top, mirror_matrix_inner_top]
+          shift: [.255,0]
+      bottom: 
+        type: mousebites
+        anchor: 
+          rotate: 90
+          ref: [matrix_inner_bottom, mirror_matrix_inner_bottom]
+          shift: [.255,-.25h]
+
+outlines:
+  exports:
+    _bodyLeft:
+      - type: polygon
+        points:
+          - ref: matrix_pinky_numrow
+            shift: [-.5w + .25, -.5h + .25]
+          - ref: matrix_pinky_numrow
+            shift: [-.5w + .25, .5h - .25]
+          - ref: matrix_pinky_numrow
+            shift: [.5w + .25, .5h - .25]
+
+          - ref: matrix_ring_numrow
+            shift: [-.5w + .25, .5h - .25]
+          - ref: matrix_ring_numrow
+            shift: [.5w + .25, .5h - .25]
+
+          - ref: matrix_middle_numrow
+            shift: [-.5w + .25, .5h - .25]
+          - ref: matrix_middle_numrow
+            shift: [.5w - .25, .5h - .25]
+
+          - ref: matrix_index_numrow
+            shift: [-.5w - .25, .5h - .25]
+          - ref: matrix_index_numrow
+            shift: [.5w - .25, .5h - .25]
+          
+          - ref: matrix_inner_numrow
+            shift: [-.5w - .25, .5h - .25]
+          - ref: matrix_inner_numrow
+            shift: [.5w - .25, .5h - .25]
+
+          - ref: matrix_inner_numrow
+            shift: [.5w - .25, -.5h + .25]
+          - ref: matrix_inner_numrow
+            shift: [-.5w + .25, -.5h + .25]
+
+          - ref: matrix_index_numrow
+            shift: [.5w + .25, -.5h + .25]
+          - ref: matrix_index_numrow
+            shift: [-.5w + .25, -.5h + .25]
+
+          - ref: matrix_middle_numrow
+            shift: [.5w + .25, -.5h + .25]
+          - ref: matrix_middle_numrow
+            shift: [-.5w - .25, -.5h + .25]
+          - ref: matrix_ring_numrow
+            shift: [.5w - .25, -.5h + .25]
+          - ref: matrix_ring_numrow
+            shift: [-.5w - .25, -.5h + .25]
+          
+
+          - ref: matrix_pinky_numrow
+            shift: [.5w - .25, -.5h + .25]       
+      - type: polygon
+        points:
+          - ref: matrix_outer_top
+            shift: [-.5w + .25, .5h - .25]
+          - ref: matrix_outer_top
+            shift: [.5w - .25, .5h - .25]
+          - ref: matrix_outer_bottom
+            shift: [.5w - .25, -.5h + .25]
+          - ref: matrix_outer_bottom
+            shift: [-.5w + .25, -.5h + .25]    
+      # esc
+      - type: polygon
+        points:
+          - ref: matrix_outer_numrow
+            shift: [-.5w + .25, -.5h + .25]
+          - ref: matrix_outer_numrow
+            shift: [-.5w + .25, .5h - .25]
+          - ref: matrix_outer_numrow
+            shift: [.5w - .25, .5h - .25]
+          - ref: matrix_outer_numrow
+            shift: [.5w -.25, -.5h + .25]    
+      - type: polygon
+        points:
+          - ref: matrix_pinky_top
+            shift: [-.5w + .25, .5h - .25]
+          - ref: matrix_pinky_top
+            shift: [.5w + .25, .5h - .25]
+
+          - ref: matrix_ring_top
+            shift: [-.5w + .25, .5h - .25]
+          - ref: matrix_ring_top
+            shift: [.5w + .25, .5h - .25]
+
+          - ref: matrix_middle_top
+            shift: [-.5w + .25, .5h - .25]
+          - ref: matrix_middle_top
+            shift: [.5w - .25, .5h - .25]
+
+          - ref: matrix_index_top
+            shift: [-.5w - .25, .5h - .25]
+          - ref: matrix_index_top
+            shift: [.5w - .25, .5h - .25]
+          
+          - ref: matrix_inner_top
+            shift: [-.5w - .25, .5h - .25]
+          - ref: matrix_inner_top
+            shift: [.5w + 21.64, .5h - .25]
+
+
+          - ref: matrix_inner_bottom
+            shift: [.5w + 21.64, -.5h - 1.25]
+          - ref: matrix_inner_bottom
+            shift: [-.5w + .25, -.5h + .25]
+          # - ref: matrix_inner_bottom
+          #   shift: [-.5w + .25, -.5h + 1.5]
+          - ref: matrix_index_bottom
+            shift: [.5w + .25, -.5h + .25]
+          - ref: matrix_index_bottom
+            shift: [-.5w + .25, -.5h + .25]
+          # - ref: matrix_index_bottom
+          #   shift: [-.5w + .25, -.5h + 1.5]            
+          - ref: matrix_middle_bottom
+            shift: [.5w + .25, -.5h + .25]
+          - ref: matrix_middle_bottom
+            shift: [-.5w, -.5h + .25]
+          # - ref: matrix_ring_bottom
+          #   shift: [.5w - .25, -.5h + 2.5]
+          - ref: matrix_ring_bottom
+            shift: [.5w - .25, -.5h + .25]
+          - ref: matrix_ring_bottom
+            shift: [-.5w, -.5h + .25]
+          
+          # - ref:  matrix_pinky_bottom
+          #   shift: [.5w - .25, -.5h + 2.5]
+          - ref: matrix_pinky_bottom
+            shift: [.5w - .25, -.5h + .25]                 
+          - ref: matrix_pinky_bottom
+            shift: [-.5w + .25, -.5h + .25]
+      - type: polygon
+        points:
+          - ref: thumb_super_tucky
+            shift: [-.5w + .5, -.5h + .5]
+          - ref: thumb_super_tucky
+            shift: [-.5w + .5, .5h - .5]
+          - ref: thumb_super_tucky
+            shift: [.5w, .5h - .5]
+          - ref: thumb_tucky
+            shift: [-.5w, .5h - .5]
+          - ref: thumb_tucky
+            shift: [.5w - .5, .5h - .5]
+          
+          - ref: thumb_home
+            shift: [-.5w + .5, .5h - .5]
+          - ref: matrix_inner_bottom
+            shift: [.5w - .5, -.5h + .5]
+
+          - ref: thumb_reachy
+            shift: [-.5w + .5, h + 1]
+          - ref: thumb_reachy
+            shift: [.5w - 1, h + 1]
+          - ref: thumb_reachy
+            shift: [.5w - 1, -.5h + .5]
+          - ref: thumb_reachy
+            shift: [-.5w + .5, -.5h + .5]
+
+          - ref: thumb_home
+            shift: [.5w - .5, -.5h + .5]
+          - ref: thumb_home
+            shift: [-.5w + .5, -.5h + .5]
+          - ref: thumb_tucky
+            shift: [.5w - .5, -.5h + .5]
+          - ref: thumb_tucky
+            shift: [-.5w + .5, -.5h + .5]
+          - ref: thumb_super_tucky
+            shift: [.5w + .5, -.5h + .5]
+      - type: rectangle
+        size: [5w - 1, h]
+        anchor:
+          ref: matrix_pinky_bottom
+          shift: [-.5w + .5, -.5h]
+      - type: rectangle
+        size: [2w - 1, h]
+        anchor:
+          ref: matrix_index_bottom
+          shift: [-.5w + .5, -h]
+
+    _bodyRight:
+      - type: polygon
+        points:
+          - ref: mirror_matrix_pinky_numrow
+            shift: [-.5w + .25, -.5h + .25]
+          - ref: mirror_matrix_pinky_numrow
+            shift: [-.5w + .25, .5h - .25]
+          - ref: mirror_matrix_pinky_numrow
+            shift: [.5w + .25, .5h - .25]
+
+          - ref: mirror_matrix_ring_numrow
+            shift: [-.5w + .25, .5h - .25]
+          - ref: mirror_matrix_ring_numrow
+            shift: [.5w + .25, .5h - .25]
+
+          - ref: mirror_matrix_middle_numrow
+            shift: [-.5w + .25, .5h - .25]
+          - ref: mirror_matrix_middle_numrow
+            shift: [.5w - .25, .5h - .25]
+
+          - ref: mirror_matrix_index_numrow
+            shift: [-.5w - .25, .5h - .25]
+          - ref: mirror_matrix_index_numrow
+            shift: [.5w - .25, .5h - .25]
+          
+          - ref: mirror_matrix_inner_numrow
+            shift: [-.5w - .25, .5h - .25]
+          - ref: mirror_matrix_inner_numrow
+            shift: [.5w - .25, .5h - .25]
+
+          - ref: mirror_matrix_inner_numrow
+            shift: [.5w - .25, -.5h + .25]
+          - ref: mirror_matrix_inner_numrow
+            shift: [-.5w + .25, -.5h + .25]
+
+          - ref: mirror_matrix_index_numrow
+            shift: [.5w + .25, -.5h + .25]
+          - ref: mirror_matrix_index_numrow
+            shift: [-.5w + .25, -.5h + .25]
+
+          - ref: mirror_matrix_middle_numrow
+            shift: [.5w + .25, -.5h + .25]
+          - ref: mirror_matrix_middle_numrow
+            shift: [-.5w - .25, -.5h + .25]
+          - ref: mirror_matrix_ring_numrow
+            shift: [.5w - .25, -.5h + .25]
+          - ref: mirror_matrix_ring_numrow
+            shift: [-.5w - .25, -.5h + .25]
+          
+
+          - ref: mirror_matrix_pinky_numrow
+            shift: [.5w - .25, -.5h + .25]       
+      - type: polygon
+        points:
+          - ref: mirror_matrix_outer_top
+            shift: [-.5w + .25, .5h - .25]
+          - ref: mirror_matrix_outer_top
+            shift: [.5w - .25, .5h - .25]
+          - ref: mirror_matrix_outer_bottom
+            shift: [.5w - .25, -.5h + .25]
+          - ref: mirror_matrix_outer_bottom
+            shift: [-.5w + .25, -.5h + .25]    
+      # esc
+      - type: polygon
+        points:
+          - ref: mirror_matrix_outer_numrow
+            shift: [-.5w + .25, -.5h + .25]
+          - ref: mirror_matrix_outer_numrow
+            shift: [-.5w + .25, .5h - .25]
+          - ref: mirror_matrix_outer_numrow
+            shift: [.5w - .25, .5h - .25]
+          - ref: mirror_matrix_outer_numrow
+            shift: [.5w -.25, -.5h + .25]    
+      - type: polygon
+        points:
+          - ref: mirror_matrix_pinky_top
+            shift: [-.5w + .25, .5h - .25]
+          - ref: mirror_matrix_pinky_top
+            shift: [.5w + .25, .5h - .25]
+
+          - ref: mirror_matrix_ring_top
+            shift: [-.5w + .25, .5h - .25]
+          - ref: mirror_matrix_ring_top
+            shift: [.5w + .25, .5h - .25]
+
+          - ref: mirror_matrix_middle_top
+            shift: [-.5w + .25, .5h - .25]
+          - ref: mirror_matrix_middle_top
+            shift: [.5w - .25, .5h - .25]
+
+          - ref: mirror_matrix_index_top
+            shift: [-.5w - .25, .5h - .25]
+          - ref: mirror_matrix_index_top
+            shift: [.5w - .25, .5h - .25]
+          
+          - ref: mirror_matrix_inner_top
+            shift: [-.5w - .25, .5h - .25]
+          - ref: mirror_matrix_inner_top
+            shift: [.5w + 21.64, .5h - .25]
+
+
+          - ref: mirror_matrix_inner_bottom
+            shift: [.5w + 21.64, -.5h - 1.25]
+          - ref: mirror_matrix_inner_bottom
+            shift: [-.5w + .25, -.5h + .25]
+          # - rmirror_ef: matrix_inner_bottom
+          #   shift: [-.5w + .25, -.5h + 1.5]
+          - ref: mirror_matrix_index_bottom
+            shift: [.5w + .25, -.5h + .25]
+          - ref: mirror_matrix_index_bottom
+            shift: [-.5w + .25, -.5h + .25]
+          # - rmirror_ef: matrix_index_bottom
+          #   shift: [-.5w + .25, -.5h + 1.5]            
+          - ref: mirror_matrix_middle_bottom
+            shift: [.5w + .25, -.5h + .25]
+          - ref: mirror_matrix_middle_bottom
+            shift: [-.5w, -.5h + .25]
+          # - rmirror_ef: matrix_ring_bottom
+          #   shift: [.5w - .25, -.5h + 2.5]
+          - ref: mirror_matrix_ring_bottom
+            shift: [.5w - .25, -.5h + .25]
+          - ref: mirror_matrix_ring_bottom
+            shift: [-.5w, -.5h + .25]
+          
+          # - rmirror_ef:  matrix_pinky_bottom
+          #   shift: [.5w - .25, -.5h + 2.5]
+          - ref: mirror_matrix_pinky_bottom
+            shift: [.5w - .25, -.5h + .25]                 
+          - ref: mirror_matrix_pinky_bottom
+            shift: [-.5w + .25, -.5h + .25]
+      - type: polygon
+        points:
+          - ref: mirror_thumb_super_tucky
+            shift: [-.5w + .5, -.5h + .5]
+          - ref: mirror_thumb_super_tucky
+            shift: [-.5w + .5, .5h - .5]
+          - ref: mirror_thumb_super_tucky
+            shift: [.5w, .5h - .5]
+          - ref: mirror_thumb_tucky
+            shift: [-.5w, .5h - .5]
+          - ref: mirror_thumb_tucky
+            shift: [.5w - .5, .5h - .5]
+          
+          - ref: mirror_thumb_home
+            shift: [-.5w + .5, .5h - .5]
+          - ref: mirror_matrix_inner_bottom
+            shift: [.5w - .5, -.5h + .5]
+
+          - ref: mirror_thumb_reachy
+            shift: [-.5w + .5, h + 1]
+          - ref: mirror_thumb_reachy
+            shift: [.5w - 1, h + 1]
+          - ref: mirror_thumb_reachy
+            shift: [.5w - 1, -.5h + .5]
+          - ref: mirror_thumb_reachy
+            shift: [-.5w + .5, -.5h + .5]
+
+          - ref: mirror_thumb_home
+            shift: [.5w - .5, -.5h + .5]
+          - ref: mirror_thumb_home
+            shift: [-.5w + .5, -.5h + .5]
+          - ref: mirror_thumb_tucky
+            shift: [.5w - .5, -.5h + .5]
+          - ref: mirror_thumb_tucky
+            shift: [-.5w + .5, -.5h + .5]
+          - ref: mirror_thumb_super_tucky
+            shift: [.5w + .5, -.5h + .5]
+      - type: rectangle
+        size: [5w - 1, h]
+        anchor:
+          ref: mirror_matrix_pinky_bottom
+          shift: [4.5w + .5, -.5h + .25]
+      # - type: rectangle
+      #   size: [2w - 1, h]
+      #   anchor:
+      #     ref: mirror_matrix_index_bottom
+      #     shift: [-.5w + .5, -h]
+
+
+    _snapsLeft:
+      - type: rectangle
+        size: [2, 2]
+        anchor:
+          ref: matrix_outer_numrow
+          shift: [-.25w - 1, -.5h - .5]
+      - type: rectangle
+        size: [2, 2]
+        anchor:
+          ref: matrix_outer_numrow
+          shift: [.25w - 1, -.5h - .5]        
+      - type: rectangle
+        size: [2, 2]
+        anchor:
+          ref: matrix_pinky_numrow
+          shift: [-.25w - 1, -.5h - .5]
+      - type: rectangle
+        size: [2, 2]
+        anchor:
+          ref: matrix_pinky_numrow
+          shift: [.25w - 1, -.5h - .5]                
+      - type: rectangle
+        size: [2, 2]
+        anchor:
+          ref: matrix_ring_numrow
+          shift: [-.25w - 1, -.5h - .5]
+      - type: rectangle
+        size: [2, 2]
+        anchor:
+          ref: matrix_ring_numrow
+          shift: [.25w - 1, -.5h - .5]    
+
+      - type: rectangle
+        size: [2, 2]
+        anchor:
+          ref: matrix_middle_numrow
+          shift: [-.25w - 1, -.5h - .5]
+      - type: rectangle
+        size: [2, 2]
+        anchor:
+          ref: matrix_middle_numrow
+          shift: [.25w - 1, -.5h - .5]    
+
+      - type: rectangle
+        size: [2, 2]
+        anchor:
+          ref: matrix_index_numrow
+          shift: [-.25w - 1, -.5h - .5]
+      - type: rectangle
+        size: [2, 2]
+        anchor:
+          ref: matrix_index_numrow
+          shift: [.25w - 1, -.5h - .5]    
+
+      - type: rectangle
+        size: [2, 2]
+        anchor:
+          ref: matrix_inner_numrow
+          shift: [-.25w - 1, -.5h - .5]
+      - type: rectangle
+        size: [2, 2]
+        anchor:
+          ref: matrix_inner_numrow
+          shift: [.25w - 1, -.5h - .5]    
+
+      - type: rectangle
+        size: [2, 2]
+        anchor: 
+          ref: matrix_outer_numrow
+          shift: [.5w - .5, .25h - 1]
+      - type: rectangle
+        size: [2, 2]
+        anchor: 
+          ref: matrix_outer_numrow
+          shift: [.5w - .5, -.25h - 1]
+      - type: rectangle
+        size: [2, 2]
+        anchor: 
+          ref: matrix_outer_top
+          shift: [.5w - .5, .25h - 1]
+      - type: rectangle
+        size: [2, 2]
+        anchor: 
+          ref: matrix_outer_top
+          shift: [.5w - .5, -.25h - 1]
+      - type: rectangle
+        size: [2, 2]
+        anchor: 
+          ref: matrix_outer_home
+          shift: [.5w - .5, .25h - 1]
+      - type: rectangle
+        size: [2, 2]
+        anchor: 
+          ref: matrix_outer_home
+          shift: [.5w - .5, -.25h - 1]
+      - type: rectangle
+        size: [2, 2]
+        anchor: 
+          ref: matrix_outer_bottom
+          shift: [.5w - .5, .25h - 1]
+      - type: rectangle
+        size: [2, 2]
+        anchor: 
+          ref: matrix_outer_bottom
+          shift: [.5w - .5, -.25h - 1]
+
+
+    _snapsRight:
+      - type: rectangle
+        size: [2, 2]
+        anchor:
+          ref: mirror_matrix_outer_numrow
+          shift: [-.25w + 1, -.5h - .5]
+      - type: rectangle
+        size: [2, 2]
+        anchor:
+          ref: mirror_matrix_outer_numrow
+          shift: [.25w + 1, -.5h - .5]        
+      - type: rectangle
+        size: [2, 2]
+        anchor:
+          ref: mirror_matrix_pinky_numrow
+          shift: [-.25w + 1, -.5h - .5]
+      - type: rectangle
+        size: [2, 2]
+        anchor:
+          ref: mirror_matrix_pinky_numrow
+          shift: [.25w + 1, -.5h - .5]                
+      - type: rectangle
+        size: [2, 2]
+        anchor:
+          ref: mirror_matrix_ring_numrow
+          shift: [-.25w + 1, -.5h - .5]
+      - type: rectangle
+        size: [2, 2]
+        anchor:
+          ref: mirror_matrix_ring_numrow
+          shift: [.25w + 1, -.5h - .5]    
+
+      - type: rectangle
+        size: [2, 2]
+        anchor:
+          ref: mirror_matrix_middle_numrow
+          shift: [-.25w + 1, -.5h - .5]
+      - type: rectangle
+        size: [2, 2]
+        anchor:
+          ref: mirror_matrix_middle_numrow
+          shift: [.25w + 1, -.5h - .5]    
+
+      - type: rectangle
+        size: [2, 2]
+        anchor:
+          ref: mirror_matrix_index_numrow
+          shift: [-.25w + 1, -.5h - .5]
+      - type: rectangle
+        size: [2, 2]
+        anchor:
+          ref: mirror_matrix_index_numrow
+          shift: [.25w + 1, -.5h - .5]    
+
+      - type: rectangle
+        size: [2, 2]
+        anchor:
+          ref: mirror_matrix_inner_numrow
+          shift: [-.25w + 1, -.5h - .5]
+      - type: rectangle
+        size: [2, 2]
+        anchor:
+          ref: mirror_matrix_inner_numrow
+          shift: [.25w + 1, -.5h - .5]    
+
+      - type: rectangle
+        size: [2, 2]
+        anchor: 
+          ref: mirror_matrix_outer_numrow
+          shift: [.5w + .5, .25h - 1]
+      - type: rectangle
+        size: [2, 2]
+        anchor: 
+          ref: mirror_matrix_outer_numrow
+          shift: [.5w + .5, -.25h - 1]
+      - type: rectangle
+        size: [2, 2]
+        anchor: 
+          ref: mirror_matrix_outer_top
+          shift: [.5w + .5, .25h - 1]
+      - type: rectangle
+        size: [2, 2]
+        anchor: 
+          ref: mirror_matrix_outer_top
+          shift: [.5w + .5, -.25h - 1]
+      - type: rectangle
+        size: [2, 2]
+        anchor: 
+          ref: mirror_matrix_outer_home
+          shift: [.5w + .5, .25h - 1]
+      - type: rectangle
+        size: [2, 2]
+        anchor: 
+          ref: mirror_matrix_outer_home
+          shift: [.5w + .5, -.25h - 1]
+      - type: rectangle
+        size: [2, 2]
+        anchor: 
+          ref: mirror_matrix_outer_bottom
+          shift: [.5w + .5, .25h - 1]
+      - type: rectangle
+        size: [2, 2]
+        anchor: 
+          ref: mirror_matrix_outer_bottom
+          shift: [.5w + .5, -.25h - 1]
+
+
+
+    _joinSides:
+      - type: rectangle
+        size: [2, 5]
+        anchor: 
+          ref: [matrix_inner_top, mirror_matrix_inner_top]
+          shift: [-1,-2.5]
+
+      - type: rectangle
+        size: [2, 5]
+        anchor: 
+          ref: [matrix_inner_bottom, mirror_matrix_inner_bottom]
+          shift: [-1, -2.5 - .25h]                    
+    switches:
+      - type: keys
+        side: left
+        size: [14,14]
+        bound: true
+        tags: [key]
+    _pcb:
+      - type: outline
+        name: _bodyLeft
+        fillet: .75
+      - type: outline
+        name: _bodyRight
+        fillet: .75
+      - type: outline
+        name: _snapsLeft
+      - type: outline
+        name: _snapsRight
+      - type: outline
+        name: _joinSides
+    pcb:
+      - type: outline
+        name: _pcb
+    switchplate:
+      - type: outline
+        name: _pcb
+      - type: outline
+        name: switches
+        operation: subtract
+
+pcbs:
+  switchplate:
+    include_keys: false
+    outlines:
+      main:
+        outline: switchplate
+  theSirens:
+    outlines:
+      pcb.outline: pcb
+
+    footprints:
+      # mcu:
+      #   type: xiao
+      #   anchor: 
+      #     ref: 
+      #       - matrix_inner_top
+      #       - mirror_matrix_inner_top
+      #   anchor.shift: [0,-5.75]
+      #   nets:
+      #     D10: MOSI
+      #     D9: MISO
+      #     D8: SCK
+      #     D0: r0
+      #     D1: r1
+      #     D2: r2
+      #     D3: r3
+      #     D4: r4
+      #     D5: SC_CS # nice!view / spi screen
+      #     D6: SR_CS
+      #     D7: TP_CS
+      #     BAT: BAT
+
+      # fpc:
+      #   type: fpc
+      #   anchor:
+      #     ref: [matrix_inner_home, mirror_matrix_inner_home]
+      #     # rotate: 180
+      #     shift: [0, -6]
+      #   params.side: B
+      #   nets:
+      #     A: SCK
+      #     B: MISO
+      #     C: TP_CS
+      #     D: TP_DR
+      #     E: MOSI
+      #     K: GND
+      #     L: 3V3
+        
+
+
+      # badWings:
+      #   type: text
+      #   anchor:
+      #     ref: [thumb_reachy, mirror_thumb_reachy]
+      #     shift: [0, -5]
+      #   params:
+      #     text: 'Bad Wings'
+      #     h_size: 1.75
+      #     v_size: 1.75
+      #     thickness: 0.45
+      #     side: B
+      #     justify: 'mirror'
+      # version: 
+      #   type: text
+      #   anchor:
+      #     ref: [thumb_reachy, mirror_thumb_reachy]
+      #     shift: [0, -7.35]
+      #   params:
+      #     side: B
+      #     text: 'github.com/jasonhazel'
+      #     v_size: 0.5
+      #     h_size: 0.5
+      #     thickness: 0.125
+      #     justify: 'mirror'          
